@@ -1,0 +1,72 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+app/logs/
+
+# Runtime data
+uploads/documents/*
+uploads/temp/*
+!uploads/.gitkeep
+!uploads/documents/.gitkeep
+!uploads/temp/.gitkeep
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+public_html/
+
+# Cache files
+cache/
+.cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Package files
+*.zip
+*.tar.gz
+*.rar
+
+# Testing
+coverage/
+.phpunit.result.cache
+
+# OS generated files
+.DS_Store?
+ehthumbs.db
+Icon?
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Export Platform - Functionality Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .test-section {
+        background: white;
+        margin: 20px 0;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .test-button {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .test-button:hover {
+        background: #047857;
+      }
+      .result {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        min-height: 50px;
+        white-space: pre-wrap;
+      }
+      .success {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .error {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .info {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      input,
+      select {
+        padding: 8px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🚀 Export Platform - Functionality Test</h1>
+    <p>
+      This page tests all the core functionality of the Export Platform without
+      the development server interference.
+    </p>
+
+    <div class="test-section">
+      <h2>1. API Health Check</h2>
+      <button class="test-button" onclick="testHealthCheck()">
+        Test API Health
+      </button>
+      <div id="health-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>2. Dashboard Statistics</h2>
+      <button class="test-button" onclick="testStats()">
+        Load Dashboard Stats
+      </button>
+      <div id="stats-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>3. Shipments List</h2>
+      <button class="test-button" onclick="testShipments()">
+        Load Shipments
+      </button>
+      <div id="shipments-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>4. Shipment Tracking</h2>
+      <input
+        type="text"
+        id="tracking-input"
+        placeholder="Enter tracking number (e.g., CST2024010001)"
+        style="width: 250px"
+      />
+      <button class="test-button" onclick="testTracking()">
+        Track Shipment
+      </button>
+      <div id="tracking-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>5. Create New Shipment</h2>
+      <div>
+        <input
+          type="text"
+          id="customer-name"
+          placeholder="Customer Name"
+          style="width: 200px"
+        />
+        <input
+          type="email"
+          id="customer-email"
+          placeholder="Customer Email"
+          style="width: 200px"
+        />
+      </div>
+      <button class="test-button" onclick="testCreateShipment()">
+        Create Shipment
+      </button>
+      <div id="create-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>6. Real-time Updates (SSE)</h2>
+      <button class="test-button" onclick="testSSE()">Connect to SSE</button>
+      <button class="test-button" onclick="disconnectSSE()">
+        Disconnect SSE
+      </button>
+      <div id="sse-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>7. Admin Panel Navigation</h2>
+      <a
+        href="/public/admin/index.html"
+        target="_blank"
+        class="test-button"
+        style="text-decoration: none; display: inline-block"
+        >Open Admin Panel</a
+      >
+      <div class="result info">
+        Click the button above to open the full admin panel in a new tab.
+      </div>
+    </div>
+
+    <script>
+      let sseSource = null;
+
+      async function makeApiCall(endpoint) {
+        try {
+          const response = await fetch(
+            `/app/public_api.php?endpoint=${endpoint}`,
+          );
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          throw new Error(`API call failed: ${error.message}`);
+        }
+      }
+
+      function showResult(elementId, data, type = "success") {
+        const element = document.getElementById(elementId);
+        element.className = `result ${type}`;
+        element.textContent =
+          typeof data === "string" ? data : JSON.stringify(data, null, 2);
+      }
+
+      async function testHealthCheck() {
+        try {
+          const result = await makeApiCall("health");
+          showResult("health-result", result, "success");
+        } catch (error) {
+          showResult("health-result", error.message, "error");
+        }
+      }
+
+      async function testStats() {
+        try {
+          const result = await makeApiCall("stats");
+          showResult("stats-result", result, "success");
+        } catch (error) {
+          showResult("stats-result", error.message, "error");
+        }
+      }
+
+      async function testShipments() {
+        try {
+          const result = await makeApiCall("shipments?limit=5");
+          showResult("shipments-result", result, "success");
+        } catch (error) {
+          showResult("shipments-result", error.message, "error");
+        }
+      }
+
+      async function testTracking() {
+        const trackingNumber = document
+          .getElementById("tracking-input")
+          .value.trim();
+        if (!trackingNumber) {
+          showResult(
+            "tracking-result",
+            "Please enter a tracking number",
+            "error",
+          );
+          return;
+        }
+
+        try {
+          const result = await makeApiCall(`tracking/${trackingNumber}`);
+          showResult("tracking-result", result, "success");
+        } catch (error) {
+          showResult("tracking-result", error.message, "error");
+        }
+      }
+
+      async function testCreateShipment() {
+        const customerName = document
+          .getElementById("customer-name")
+          .value.trim();
+        const customerEmail = document
+          .getElementById("customer-email")
+          .value.trim();
+
+        if (!customerName || !customerEmail) {
+          showResult(
+            "create-result",
+            "Please enter both customer name and email",
+            "error",
+          );
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "/app/public_api.php?endpoint=shipments",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                customer_name: customerName,
+                customer_email: customerEmail,
+                origin: {
+                  country: "India",
+                  city: "Kozhikode",
+                  port: "Kozhikode Port",
+                  latitude: 11.2588,
+                  longitude: 75.7804,
+                },
+                destination: {
+                  country: "USA",
+                  city: "New York",
+                  port: "Port of New York",
+                  latitude: 40.7128,
+                  longitude: -74.006,
+                },
+                total_value: 15000,
+                currency: "USD",
+                items: [
+                  { name: "Black Pepper", quantity: "100kg", value: 8000 },
+                  { name: "Cardamom", quantity: "50kg", value: 7000 },
+                ],
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          showResult("create-result", result, "success");
+
+          // Clear form
+          document.getElementById("customer-name").value = "";
+          document.getElementById("customer-email").value = "";
+        } catch (error) {
+          showResult("create-result", error.message, "error");
+        }
+      }
+
+      function testSSE() {
+        if (sseSource) {
+          sseSource.close();
+        }
+
+        try {
+          sseSource = new EventSource("/public/sse.php?client_id=test_client");
+          let eventCount = 0;
+
+          showResult("sse-result", "Connecting to SSE...", "info");
+
+          sseSource.onopen = function () {
+            showResult(
+              "sse-result",
+              "SSE Connected! Listening for events...",
+              "success",
+            );
+          };
+
+          sseSource.onmessage = function (event) {
+            eventCount++;
+            const data = JSON.parse(event.data);
+            const current = document.getElementById("sse-result").textContent;
+            showResult(
+              "sse-result",
+              `${current}\n\nEvent ${eventCount}: ${JSON.stringify(data, null, 2)}`,
+              "info",
+            );
+          };
+
+          sseSource.addEventListener("connected", function (event) {
+            const data = JSON.parse(event.data);
+            showResult(
+              "sse-result",
+              `Connected: ${JSON.stringify(data, null, 2)}`,
+              "success",
+            );
+          });
+
+          sseSource.addEventListener("shipment_update", function (event) {
+            const data = JSON.parse(event.data);
+            const current = document.getElementById("sse-result").textContent;
+            showResult(
+              "sse-result",
+              `${current}\n\nShipment Update: ${JSON.stringify(data, null, 2)}`,
+              "info",
+            );
+          });
+
+          sseSource.addEventListener("stats_update", function (event) {
+            const data = JSON.parse(event.data);
+            const current = document.getElementById("sse-result").textContent;
+            showResult(
+              "sse-result",
+              `${current}\n\nStats Update: ${JSON.stringify(data, null, 2)}`,
+              "info",
+            );
+          });
+
+          sseSource.onerror = function (error) {
+            showResult("sse-result", `SSE Error: ${error}`, "error");
+          };
+        } catch (error) {
+          showResult(
+            "sse-result",
+            `Failed to connect to SSE: ${error.message}`,
+            "error",
+          );
+        }
+      }
+
+      function disconnectSSE() {
+        if (sseSource) {
+          sseSource.close();
+          sseSource = null;
+          showResult("sse-result", "SSE Disconnected", "info");
+        } else {
+          showResult("sse-result", "No active SSE connection", "info");
+        }
+      }
+
+      // Auto-run health check on page load
+      window.addEventListener("load", function () {
+        testHealthCheck();
+      });
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", function () {
+        if (sseSource) {
+          sseSource.close();
+        }
+      });
+    </script>
+  </body>
+</html>

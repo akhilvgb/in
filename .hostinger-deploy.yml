@@ -1,0 +1,25 @@
+# Hostinger Auto-Deploy Configuration
+# This file configures automatic deployment from GitHub to Hostinger
+
+deployment:
+  source: github
+  branch: main
+  build_command: php scripts/deploy_hostinger.php
+  output_directory: public_html
+
+environment:
+  php_version: "8.1"
+
+files:
+  exclude:
+    - .git
+    - .gitignore
+    - README.md
+    - tests/
+    - docs/
+    - node_modules/
+
+hooks:
+  post_deploy:
+    - php scripts/migrate_db.php
+    - php scripts/setup_permissions.php
